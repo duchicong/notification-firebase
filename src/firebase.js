@@ -1,8 +1,6 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from 'firebase/app';
 import { getMessaging, getToken, onMessage } from 'firebase/messaging';
-import { getMessaging as getMessagingSW } from "firebase/messaging/sw";
-import { onBackgroundMessage } from "firebase/messaging/sw";
 
 // import { messaging } from './firebase-messaging-sw';
 // TODO: Add SDKs for Firebase products that you want to use
@@ -10,12 +8,12 @@ import { onBackgroundMessage } from "firebase/messaging/sw";
 
 // Your web app's Firebase configuration
 export const firebaseConfig = {
-  apiKey: "AIzaSyC25yLpt5bky0ji6QN_CvqHtPbD39PR1IY",
-  authDomain: "push-notification-demo-8a13b.firebaseapp.com",
-  projectId: "push-notification-demo-8a13b",
-  storageBucket: "push-notification-demo-8a13b.appspot.com",
-  messagingSenderId: "578550315157",
-  appId: "1:578550315157:web:96a08ab5eed2d6acd1839c"
+  apiKey: process.env.REACT_APP_API_KEY,
+  authDomain: process.env.REACT_APP_AUTH_DOMAIN,
+  projectId: process.env.REACT_APP_PROJECT_ID,
+  storageBucket: process.env.REACT_APP_STORAGE_BUCKET,
+  messagingSenderId: process.env.REACT_APP_MESSAGING_SENDER_ID,
+  appId: process.env.REACT_APP_ID
 };
 
 // Initialize Firebase
@@ -23,7 +21,7 @@ const firebaseApp = initializeApp(firebaseConfig);
 const messaging = getMessaging(firebaseApp);
 
 export const getTokenFirebase = (setTokenFound) => {
-    return getToken(messaging, { vapidKey: 'BD8IYv8_Gy75ITvD3sY4B7ifUFx04Y06rIuxJvVVF42tLJ5v45MoM_dW0CSQtjcfUkzd-R8d1ZtGQFhehHHsEv4' })
+    return getToken(messaging, { vapidKey: process.env.REACT_APP_VAPID_KEY })
         .then(currentToken => {
             if (currentToken) {
                 console.log('current token for client: ', currentToken);
@@ -42,7 +40,6 @@ export const getTokenFirebase = (setTokenFound) => {
 
 export const onMessageListener = () => {
     return new Promise(resolve => {
-        console.log('runnnnnnn')
         return onMessage(messaging, payload => {
             new Notification(payload.notification.title, {
                 body: payload.notification.body
@@ -50,6 +47,26 @@ export const onMessageListener = () => {
             resolve(payload);
         });
     });
+}
+
+function registerEnvIntoSW() {
+    if ("serviceWorker" in navigator) {
+        console.log("Registration started", navigator);
+        const config = encodeURIComponent(
+            JSON.stringify(firebaseConfig)
+        );
+
+        navigator.serviceWorker
+            .register(
+            `${window.location.origin}/firebase-messaging-sw.js?firebaseConfig=${config}`
+            )
+            .then(function (registration) {
+            console.log("Registration successful, scope is:", registration.scope);
+            })
+            .catch(function (err) {
+            console.log("Service worker registration failed, error:", err);
+            });
+    }
 }
 
 
@@ -63,18 +80,5 @@ export const onMessageListener = () => {
         }
       });
       console.log('Notification ', Notification)
+    //   registerEnvIntoSW();
 })()
-// const messagingSW = getMessagingSW();
-// onBackgroundMessage(messaging, function (payload) {
-//     const self = this;
-//   console.log('[firebase-messaging-sw.js] Received background message ', payload);
-//   // Customize notification here
-//   const notificationTitle = 'Background Message Title';
-//   const notificationOptions = {
-//     body: 'Background Message body.',
-//     icon: '/firebase-logo.png'
-//   };
-
-//   self.registration.showNotification(notificationTitle,
-//     notificationOptions);
-// });
